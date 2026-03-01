@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import toast, { Toaster } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { toast, Toaster } from "react-hot-toast";
 import Link from "next/link";
 import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // ✅ Direct URL
+const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app";
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -22,24 +22,18 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isFormValid, setIsFormValid] = useState(false);
 
-  // ✅ Form validation
-  useEffect(() => {
-    setIsFormValid(
-      formData.email.trim() !== "" && 
-      formData.password.trim() !== "" &&
-      validateEmail(formData.email)
-    );
-  }, [formData]);
-
-  // Email validation helper
+  // Form validation
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // 🔹 GSAP animation on mount
+  const isFormValid = formData.email.trim() !== "" && 
+                      formData.password.trim() !== "" &&
+                      validateEmail(formData.email);
+
+  // GSAP animation
   useEffect(() => {
     if (formRef.current) {
       gsap.fromTo(
@@ -56,44 +50,60 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    
+    if (!isFormValid) {
+      toast.error("Please fill all fields correctly");
+      return;
+    }
 
     setLoading(true);
+    
     try {
+      console.log('🔍 Sending login request to:', `${API_BASE_URL}/auth/login`);
+      console.log('📤 Data:', formData);
+
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-      
+
       console.log('✅ Login response:', response.data);
-      
+
       // ✅ Save token to localStorage as backup
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Set default header for all future requests
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
+        console.log('✅ Token saved to localStorage');
       }
-      
-      toast.success(response.data?.message || "Login successful ✅");
-      
-      // ✅ FIXED: Redirect to dashboard
+
+      toast.success('Login successful! Redirecting...');
+
+      // ✅ Redirect to dashboard
       setTimeout(() => {
-        window.location.href = DASHBOARD_URL; // Simple direct URL
-      }, 500);
-      
+        window.location.href = DASHBOARD_URL;
+      }, 1000);
+
     } catch (err: any) {
-      console.error("Login error:", err);
+      console.error('❌ Login error:', err);
       
       if (err.response?.status === 401) {
         toast.error("Invalid email or password");
-      } else if (err.response?.status === 404) {
-        toast.error("User not found. Please register first.");
+      } else if (err.response?.status === 400) {
+        toast.error(err.response?.data?.error || "User not found");
       } else {
-        toast.error(err?.response?.data?.error || "Login failed ❌");
+        toast.error(err?.response?.data?.error || "Login failed");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔹 Google login with nonce
   const handleGoogleLogin = () => {
     const nonce = Math.random().toString(36).substring(2);
     sessionStorage.setItem("google_nonce", nonce);
@@ -120,7 +130,7 @@ export default function LoginPage() {
   return (
     <>
       <Toaster position="top-right" />
-      {/* Rest of your JSX remains the same */}
+
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 px-4">
         <form
           ref={formRef}
@@ -141,17 +151,9 @@ export default function LoginPage() {
               placeholder="Email Address"
               value={formData.email}
               onChange={handleChange}
-              className={`w-full px-4 py-2.5 rounded-xl border ${
-                formData.email && !validateEmail(formData.email)
-                  ? 'border-red-500 focus:ring-red-500'
-                  : 'border-gray-300 focus:ring-black/10'
-              } bg-gray-50 text-sm text-gray-900
-              focus:outline-none focus:ring-2 focus:border-black transition`}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-gray-50 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
               disabled={loading}
             />
-            {formData.email && !validateEmail(formData.email) && (
-              <p className="text-xs text-red-500 mt-1">Please enter a valid email</p>
-            )}
 
             <div className="relative">
               <input
@@ -160,10 +162,7 @@ export default function LoginPage() {
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-300
-                           bg-gray-50 text-sm text-gray-900 pr-12
-                           focus:outline-none focus:ring-2 focus:ring-black/10
-                           focus:border-black transition"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 bg-gray-50 text-sm text-gray-900 pr-12 focus:outline-none focus:ring-2 focus:ring-black/10 focus:border-black transition"
                 disabled={loading}
               />
               <button
