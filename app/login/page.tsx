@@ -81,9 +81,9 @@ export default function LoginPage() {
       setTimeout(() => {
         // If frontend URL is different, use it, otherwise go to dashboard
         if (FRONTEND_URL !== window.location.origin) {
-          window.location.href = `${FRONTEND_URL}"https://dashboard.vercel.app"`;
+          window.location.href = `${FRONTEND_URL}"https://dashboard-eta-gules-99.vercel.app"`;
         } else {
-          router.push("https://dashboard.vercel.app");
+          router.push("https://dashboard-eta-gules-99.vercel.app");
         }
       }, 150);
     } catch (err: any) {

@@ -110,9 +110,9 @@ export default function RegisterPage() {
       // Redirect to dashboard
       setTimeout(() => {
         if (FRONTEND_URL !== window.location.origin) {
-          window.location.href = `${FRONTEND_URL}"https://dashboard.vercel.app"`;
+          window.location.href = `${FRONTEND_URL}"https://dashboard-eta-gules-99.vercel.app"`;
         } else {
-          router.push("https://dashboard.vercel.app");
+          router.push("https://dashboard-eta-gules-99.vercel.app");
         }
       }, 150);
     } catch (err: any) {
