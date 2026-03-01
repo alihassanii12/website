@@ -9,7 +9,7 @@ import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001';
+const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // ✅ Direct URL
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -58,38 +58,29 @@ export default function LoginPage() {
     e.preventDefault();
     if (!isFormValid) return;
 
-    // Additional validation
-    if (!validateEmail(formData.email)) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
       });
       
+      console.log('✅ Login response:', response.data);
+      
+      // ✅ Save token to localStorage as backup
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      
       toast.success(response.data?.message || "Login successful ✅");
       
-      // Redirect to dashboard
+      // ✅ FIXED: Redirect to dashboard
       setTimeout(() => {
-        // If frontend URL is different, use it, otherwise go to dashboard
-        if (FRONTEND_URL !== window.location.origin) {
-          window.location.href = `${FRONTEND_URL}"https://dashboard-eta-gules-99.vercel.app"`;
-        } else {
-          router.push("https://dashboard-eta-gules-99.vercel.app");
-        }
-      }, 150);
+        window.location.href = DASHBOARD_URL; // Simple direct URL
+      }, 500);
+      
     } catch (err: any) {
       console.error("Login error:", err);
       
-      // Handle specific error cases
       if (err.response?.status === 401) {
         toast.error("Invalid email or password");
       } else if (err.response?.status === 404) {
@@ -129,7 +120,7 @@ export default function LoginPage() {
   return (
     <>
       <Toaster position="top-right" />
-
+      {/* Rest of your JSX remains the same */}
       <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 px-4">
         <form
           ref={formRef}
@@ -229,7 +220,6 @@ export default function LoginPage() {
             <div className="h-px bg-gray-300 flex-1" />
           </div>
 
-          {/* Google login button */}
           <button
             type="button"
             onClick={handleGoogleLogin}

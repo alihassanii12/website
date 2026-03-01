@@ -9,7 +9,7 @@ import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3001';
+const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // ✅ Direct dashboard URL
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -105,16 +105,20 @@ export default function RegisterPage() {
         withCredentials: true,
       });
       
+      console.log('✅ Register response:', response.data);
+      
+      // ✅ Save token to localStorage as backup
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+      }
+      
       toast.success(response.data?.message || "Registered & Logged in ✅");
       
-      // Redirect to dashboard
+      // ✅ FIXED: Redirect to dashboard
       setTimeout(() => {
-        if (FRONTEND_URL !== window.location.origin) {
-          window.location.href = `${FRONTEND_URL}"https://dashboard-eta-gules-99.vercel.app"`;
-        } else {
-          router.push("https://dashboard-eta-gules-99.vercel.app");
-        }
-      }, 150);
+        window.location.href = DASHBOARD_URL; // Simple direct URL
+      }, 500);
+      
     } catch (err: any) {
       console.error("Register error:", err);
       
