@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
   // Form validation
   const validateEmail = (email: string) => {
@@ -44,6 +45,12 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Debug function to check cookies
+  const checkCookies = () => {
+    console.log('🍪 Current cookies:', document.cookie);
+    return document.cookie;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -57,10 +64,14 @@ export default function LoginPage() {
     }
 
     setLoading(true);
+    setDebugInfo(null);
     
     try {
       console.log('🔍 Sending login request to:', `${API_BASE_URL}/auth/login`);
       console.log('📤 Redirect URL:', FRONTEND_URL);
+      
+      // Check cookies before login
+      console.log('🍪 Cookies before login:', document.cookie);
 
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
@@ -70,6 +81,24 @@ export default function LoginPage() {
       });
 
       console.log('✅ Login response:', response.data);
+      console.log('✅ Response headers:', response.headers);
+      
+      // Check cookies after login
+      setTimeout(() => {
+        const cookiesAfterLogin = document.cookie;
+        console.log('🍪 Cookies after login (after 500ms):', cookiesAfterLogin);
+        
+        setDebugInfo({
+          cookiesPresent: cookiesAfterLogin.includes('token='),
+          cookiesString: cookiesAfterLogin,
+          tokenInLocalStorage: !!localStorage.getItem('token')
+        });
+        
+        // Agar cookie nahi hai to warning do
+        if (!cookiesAfterLogin.includes('token=')) {
+          toast.error('Cookie not set! Check backend CORS settings');
+        }
+      }, 500);
 
       // ✅ Save token to localStorage as backup
       if (response.data.token) {
@@ -86,8 +115,12 @@ export default function LoginPage() {
 
       // ✅ Redirect to dashboard frontend
       setTimeout(() => {
-        window.location.href = FRONTEND_URL; // https://dashboard-eta-gules-99.vercel.app
-      }, 1000);
+        // Try to open dashboard in new tab for testing
+        // window.open(FRONTEND_URL, '_blank');
+        
+        // Redirect current tab
+        window.location.href = FRONTEND_URL;
+      }, 1500);
 
     } catch (err: any) {
       console.error('❌ Login error:', err);
@@ -104,6 +137,19 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Manual cookie check
+  const handleManualCheck = () => {
+    const cookies = document.cookie;
+    const hasToken = cookies.includes('token=');
+    toast.info(`Cookies: ${cookies || 'No cookies found'}`);
+    console.log('🍪 Manual cookie check:', cookies);
+    setDebugInfo({
+      cookiesPresent: hasToken,
+      cookiesString: cookies,
+      tokenInLocalStorage: !!localStorage.getItem('token')
+    });
   };
 
   const handleGoogleLogin = () => {
@@ -145,6 +191,24 @@ export default function LoginPage() {
           <p className="text-center text-sm text-gray-500">
             Enter your credentials to continue
           </p>
+
+          {/* Debug Button - Remove in production */}
+          <button
+            type="button"
+            onClick={handleManualCheck}
+            className="w-full py-1 text-xs text-gray-400 hover:text-gray-600 underline"
+          >
+            Check Cookies
+          </button>
+
+          {/* Debug Info */}
+          {debugInfo && (
+            <div className="bg-gray-100 p-2 rounded-lg text-xs">
+              <p>Cookies Present: {debugInfo.cookiesPresent ? '✅' : '❌'}</p>
+              <p>LocalStorage Token: {debugInfo.tokenInLocalStorage ? '✅' : '❌'}</p>
+              <p className="truncate">Cookies: {debugInfo.cookiesString || 'None'}</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             <input
