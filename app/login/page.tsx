@@ -8,8 +8,8 @@ import Link from "next/link";
 import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend.vercel.app'; // Replace with your actual backend URL
+const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // Your actual dashboard URL
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -60,7 +60,6 @@ export default function LoginPage() {
     
     try {
       console.log('🔍 Sending login request to:', `${API_BASE_URL}/auth/login`);
-      console.log('📤 Data:', formData);
 
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
@@ -71,15 +70,11 @@ export default function LoginPage() {
 
       console.log('✅ Login response:', response.data);
 
-      // ✅ Save token to localStorage as backup
+      // ✅ Save to localStorage
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        
-        // Set default header for all future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-        
-        console.log('✅ Token saved to localStorage');
       }
 
       toast.success('Login successful! Redirecting...');
@@ -92,7 +87,9 @@ export default function LoginPage() {
     } catch (err: any) {
       console.error('❌ Login error:', err);
       
-      if (err.response?.status === 401) {
+      if (err.code === 'ERR_NETWORK') {
+        toast.error("Network error - please check if backend is running");
+      } else if (err.response?.status === 401) {
         toast.error("Invalid email or password");
       } else if (err.response?.status === 400) {
         toast.error(err.response?.data?.error || "User not found");

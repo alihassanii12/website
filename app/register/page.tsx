@@ -8,8 +8,8 @@ import Link from "next/link";
 import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // ✅ Direct dashboard URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend.vercel.app'; // Replace with your actual backend URL
+const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // Your actual dashboard URL
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -17,8 +17,7 @@ axios.defaults.timeout = 30000;
 
 // Generate nonce for Google OAuth
 function generateNonce(length = 16) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let nonce = "";
   for (let i = 0; i < length; i++) {
     nonce += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -107,23 +106,26 @@ export default function RegisterPage() {
       
       console.log('✅ Register response:', response.data);
       
-      // ✅ Save token to localStorage as backup
+      // ✅ Save token to localStorage
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
       }
       
       toast.success(response.data?.message || "Registered & Logged in ✅");
       
-      // ✅ FIXED: Redirect to dashboard
+      // ✅ Redirect to dashboard
       setTimeout(() => {
-        window.location.href = DASHBOARD_URL; // Simple direct URL
+        window.location.href = DASHBOARD_URL;
       }, 500);
       
     } catch (err: any) {
       console.error("Register error:", err);
       
-      // Handle specific error cases
-      if (err.response?.status === 409) {
+      if (err.code === 'ERR_NETWORK') {
+        toast.error("Network error - please check if backend is running");
+      } else if (err.response?.status === 409) {
         toast.error("Email already exists. Please login instead.");
       } else if (err.response?.status === 400) {
         toast.error(err?.response?.data?.error || "Invalid registration data");
