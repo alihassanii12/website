@@ -8,8 +8,8 @@ import Link from "next/link";
 import gsap from "gsap";
 
 // ==================== API CONFIGURATION ====================
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://your-backend.vercel.app'; // Replace with your actual backend URL
-const DASHBOARD_URL = "https://dashboard-eta-gules-99.vercel.app"; // Your actual dashboard URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://image-library-backend-5ola.vercel.app';
+const FRONTEND_URL = process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://dashboard-eta-gules-99.vercel.app';
 
 // Configure axios defaults
 axios.defaults.withCredentials = true;
@@ -60,6 +60,7 @@ export default function LoginPage() {
     
     try {
       console.log('🔍 Sending login request to:', `${API_BASE_URL}/auth/login`);
+      console.log('📤 Redirect URL:', FRONTEND_URL);
 
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
         withCredentials: true,
@@ -70,25 +71,29 @@ export default function LoginPage() {
 
       console.log('✅ Login response:', response.data);
 
-      // ✅ Save to localStorage
+      // ✅ Save token to localStorage as backup
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Set default header for all future requests
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        
+        console.log('✅ Token saved to localStorage');
       }
 
       toast.success('Login successful! Redirecting...');
 
-      // ✅ Redirect to dashboard
+      // ✅ Redirect to dashboard frontend
       setTimeout(() => {
-        window.location.href = DASHBOARD_URL;
+        window.location.href = FRONTEND_URL; // https://dashboard-eta-gules-99.vercel.app
       }, 1000);
 
     } catch (err: any) {
       console.error('❌ Login error:', err);
       
       if (err.code === 'ERR_NETWORK') {
-        toast.error("Network error - please check if backend is running");
+        toast.error("Network error - backend not reachable");
       } else if (err.response?.status === 401) {
         toast.error("Invalid email or password");
       } else if (err.response?.status === 400) {
