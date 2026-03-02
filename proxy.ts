@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(req: NextRequest) {
+
   const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
-  
   console.log(`🔍 Website Middleware - Path: ${pathname}`);
   console.log(`🔍 Token present: ${!!token}`);
   
